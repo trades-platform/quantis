@@ -1,4 +1,4 @@
-"""MACD DIF 从零轴上方回落向零轴的持续过程。"""
+"""MACD DIF 回零轴：检测 DIF 从零轴上方或下方回归零轴的持续过程。"""
 from __future__ import annotations
 from typing import Any, Dict
 import numpy as np
@@ -11,7 +11,7 @@ from ..utils.ta import macd
 @register_pattern
 class MacdDifReturnToZero(BasePattern):
     name = "macd_dif_return_to_zero"
-    description = "检测 DIF 从零轴上方逐步回落向零轴的持续过程"
+    description = "检测 DIF 从零轴上方或下方回归零轴的持续过程"
     default_params = {
         "fast":            {"default": 12},
         "slow":            {"default": 26},
@@ -34,39 +34,71 @@ class MacdDifReturnToZero(BasePattern):
         diff, _, _ = macd(df["close"], params["fast"], params["slow"], params["signal"])
         d = diff.values
         n = len(d)
-        min_decline_pct = params["min_decline_pct"]
+        min_pct = params["min_decline_pct"]
 
         active_arr     = np.zeros(n, dtype=bool)
         confidence_arr = np.zeros(n, dtype=float)
         bar_count_arr  = np.zeros(n, dtype=int)
         peak_dif_arr   = np.full(n, np.nan)
         dif_arr        = d.copy()
+        direction_arr  = np.empty(n, dtype=object)
 
-        running_max = float("-inf")
-        decline_start = -1
+        run_max = float("-inf")
+        run_min = float("inf")
+        above_start = -1
+        below_start = -1
 
         for i in range(n):
-            if np.isnan(d[i]) or d[i] <= 0:
-                running_max = float("-inf")
-                decline_start = -1
-                continue
-            if d[i] >= running_max:
-                running_max = d[i]
-                decline_start = -1
-            elif decline_start == -1:
-                decline_start = i
-
-            if decline_start == -1 or running_max <= 0:
+            if np.isnan(d[i]):
+                run_max = float("-inf")
+                run_min = float("inf")
+                above_start = -1
+                below_start = -1
                 continue
 
-            decline_pct = 1.0 - d[i] / running_max
-            if decline_pct < min_decline_pct:
-                continue
+            if d[i] > 0:
+                run_min = float("inf")
+                below_start = -1
 
-            active_arr[i]     = True
-            confidence_arr[i] = round(decline_pct, 4)
-            bar_count_arr[i]  = i - decline_start + 1
-            peak_dif_arr[i]   = round(running_max, 4)
+                if d[i] >= run_max:
+                    run_max = d[i]
+                    above_start = -1
+                elif above_start == -1:
+                    above_start = i
+
+                if above_start != -1 and run_max > 0:
+                    pct = 1.0 - d[i] / run_max
+                    if pct >= min_pct:
+                        active_arr[i]     = True
+                        confidence_arr[i] = round(pct, 4)
+                        bar_count_arr[i]  = i - above_start + 1
+                        peak_dif_arr[i]   = round(run_max, 4)
+                        direction_arr[i]  = "above"
+
+            elif d[i] < 0:
+                run_max = float("-inf")
+                above_start = -1
+
+                if d[i] <= run_min:
+                    run_min = d[i]
+                    below_start = -1
+                elif below_start == -1:
+                    below_start = i
+
+                if below_start != -1 and run_min < 0:
+                    pct = 1.0 - d[i] / run_min
+                    if pct >= min_pct:
+                        active_arr[i]     = True
+                        confidence_arr[i] = round(pct, 4)
+                        bar_count_arr[i]  = i - below_start + 1
+                        peak_dif_arr[i]   = round(run_min, 4)
+                        direction_arr[i]  = "below"
+
+            else:
+                run_max = float("-inf")
+                run_min = float("inf")
+                above_start = -1
+                below_start = -1
 
         return pd.DataFrame({
             "active":     active_arr,
@@ -74,4 +106,5 @@ class MacdDifReturnToZero(BasePattern):
             "bar_count":  bar_count_arr,
             "dif":        np.round(dif_arr, 4),
             "peak_dif":   peak_dif_arr,
+            "direction":  direction_arr,
         }, index=df.index)
