@@ -14,6 +14,8 @@ src/quantis/
 │   ├── base.py         BaseAnalyzer → BaseIndicator / BasePattern
 │   ├── registry.py     _Registry + @register_indicator / @register_pattern
 │   └── engine.py       AnalysisEngine.run() + analyze() 便捷函数
+├── data/
+│   └── fetch.py        fetch_klines / fetch_klines_multi — 行情获取与归一化
 ├── utils/
 │   ├── validation.py   ensure_ohlcv() — 列检查、类型校验、列名归一化
 │   └── ta.py           sma / ema / macd / bbands / rsi / atr（纯 pandas/numpy）
@@ -71,6 +73,82 @@ df.attrs["name"] = "豆粕ETF华夏"
 | `"monthly"` | 月线 |
 
 `ensure_ohlcv()`（`utils/validation.py`）会在 engine 入口做列检查、类型校验和列名归一化。
+
+---
+
+## 行情获取（data 模块）
+
+基于 [tickflow](https://pypi.org/project/tickflow/) 从远程 API 拉取 K 线数据，自动归一化为上述 OHLCV 格式。需额外安装：
+
+```bash
+pip install quantis[data]
+```
+
+### 代码格式
+
+支持两种写法，内部自动解析完整 symbol：
+
+| 输入 | 解析结果 |
+|------|----------|
+| `"588000"` | 自动查询 → `"588000.SH"` |
+| `"588000.SH"` | 直接使用 |
+| `"000001"` | 自动查询 → `"000001.SZ"` |
+
+**映射缓存**：首次查询 `588000` → `588000.SH` 后写入本地文件 `~/.cache/quantis/symbol_map.json`，后续直接读缓存，无需再次网络请求。
+
+### fetch_klines
+
+```python
+from quantis import fetch_klines
+
+# 日线 — 默认 800 根 bar
+df = fetch_klines("588000")                # 或 "588000.SH"
+df = fetch_klines("588000", period="daily", count=250)
+
+# 分钟线
+df = fetch_klines("588000", period=5)      # 5 分钟 K
+df = fetch_klines("588000", period=15)     # 15 分钟 K
+df = fetch_klines("588000", period=60)     # 60 分钟 K
+
+# 周线 / 月线
+df = fetch_klines("588000", period="weekly")
+df = fetch_klines("588000", period="monthly")
+
+# 返回的 df 直接可用：
+#   df.attrs["code"]    → "588000.SH"
+#   df.attrs["name"]    → "科创板50ETF"
+#   df.attrs["period"]  → "daily" / 5 / "weekly" / ...
+```
+
+### fetch_klines_multi
+
+一次获取多个周期的 K 线，返回 `dict[str, DataFrame]`：
+
+```python
+from quantis import fetch_klines_multi
+
+dfs = fetch_klines_multi("588000", periods=["daily", "weekly", "monthly"])
+# dfs["daily"]   → 日线 DataFrame
+# dfs["weekly"]  → 周线 DataFrame
+# dfs["monthly"] → 月线 DataFrame
+
+# 自定义周期
+dfs = fetch_klines_multi("588000", periods=[5, 15, 60, "daily"])
+```
+
+### period 取值对照
+
+| quantis period | tickflow period | 含义 |
+|----------------|-----------------|------|
+| `1` | `1m` | 1 分钟 |
+| `5` | `5m` | 5 分钟 |
+| `15` | `15m` | 15 分钟 |
+| `30` | `30m` | 30 分钟 |
+| `60` | `60m` | 60 分钟 |
+| `120` | `120m` | 120 分钟 |
+| `"daily"` | `1d` | 日线 |
+| `"weekly"` | `1w` | 周线 |
+| `"monthly"` | `1M` | 月线 |
 
 ---
 
