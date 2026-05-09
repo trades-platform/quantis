@@ -214,3 +214,8 @@ class MyPattern(BasePattern):
 pip install -e ".[dev]"
 python -m pytest -v
 ```
+
+### Git Commit 规范
+
+- commit message 必须带 `Signed-off-by:` 行（`git commit -s`）
+- 不带 `Co-Authored-By` 或其他 AI 协作标记
