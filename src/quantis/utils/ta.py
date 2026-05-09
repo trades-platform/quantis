@@ -55,6 +55,20 @@ def bbands(
     return middle - stddev * std, middle, middle + stddev * std
 
 
+def bias(series: pd.Series, period: int = 6) -> pd.Series:
+    """Bias (乖离率): (close - MA) / MA * 100."""
+    ma = sma(series, period)
+    return (series - ma) / ma * 100
+
+
+def cci(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
+    """Commodity Channel Index."""
+    tp = (high + low + close) / 3
+    sma_tp = sma(tp, period)
+    md = sma((tp - sma_tp).abs(), period)
+    return (tp - sma_tp) / (0.015 * md)
+
+
 def atr(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
     prev = close.shift(1)
     tr = pd.concat([(high-low).abs(), (high-prev).abs(), (low-prev).abs()], axis=1).max(axis=1)
