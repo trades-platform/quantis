@@ -12,6 +12,7 @@ from ..utils.ta import sma
 class LowVolumePullbackMA(BasePattern):
     name = "low_volume_pullback_ma"
     description = "价格缩量回踩MA附近，成交量低于均量，回调蓄势"
+    confidence_desc = "缩量程度(50%)与接近MA程度(50%)的综合评分"
     default_params = {
         "ma_period":      {"default": 20},
         "vol_ma_period":  {"default": 20},

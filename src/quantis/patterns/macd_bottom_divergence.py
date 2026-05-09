@@ -25,6 +25,7 @@ def _find_local_extrema(arr: np.ndarray, order: int = 5, mode: str = "min") -> L
 class MacdBottomDivergence(BasePattern):
     name = "macd_bottom_divergence"
     description = "价格创新低但DIF未创新低，预示下跌动能衰竭"
+    confidence_desc = "DIF两低点差异占前低点绝对值的比例，越高背离越明显"
     default_params = {
         "fast":     {"default": 12},
         "slow":     {"default": 26},

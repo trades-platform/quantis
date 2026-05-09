@@ -12,6 +12,7 @@ from ..utils.ta import sma
 class VolumeBreakoutMA(BasePattern):
     name = "volume_breakout_ma"
     description = "价格带量突破MA长线，量价齐升确认趋势启动"
+    confidence_desc = "成交量超出阈值的比例，放量越明显突破越有效"
     default_params = {
         "ma_period":     {"default": 60},
         "vol_ma_period": {"default": 20},

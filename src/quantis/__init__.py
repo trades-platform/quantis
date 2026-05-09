@@ -18,6 +18,7 @@ from .core.registry import (
     register_pattern,
 )
 from .core.engine import AnalysisEngine, analyze
+from .core.snapshot import snapshot
 
 # Trigger registrations of built-in analyzers
 from . import indicators, patterns  # noqa: F401
@@ -43,4 +44,5 @@ __all__ = [
     "register_pattern",
     "AnalysisEngine",
     "analyze",
+    "snapshot",
 ]

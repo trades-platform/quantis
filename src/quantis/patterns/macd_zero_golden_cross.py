@@ -12,6 +12,7 @@ from ..utils.ta import macd
 class MacdZeroGoldenCross(BasePattern):
     name = "macd_zero_golden_cross"
     description = "DIF在零轴附近上穿DEA，比普通金叉更可靠的趋势确认"
+    confidence_desc = "金叉时DIF/DEA距零轴的接近程度，越接近零轴信号越强"
     default_params = {
         "fast":           {"default": 12},
         "slow":           {"default": 26},

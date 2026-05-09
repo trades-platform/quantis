@@ -12,6 +12,7 @@ from ..utils.ta import sma, bbands
 class MaDeathCrossBollUpper(BasePattern):
     name = "ma_death_cross_boll_upper"
     description = "检测MA20死叉MA60时价格触及布林带上轨"
+    confidence_desc = "价格接近布林上轨的程度，越接近上轨信号越强"
     default_params = {
         "bb_period":      {"default": 20},
         "bb_stddev":      {"default": 2.0},

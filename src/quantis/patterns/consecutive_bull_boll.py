@@ -12,6 +12,7 @@ from ..utils.ta import bbands
 class ConsecutiveBullBoll(BasePattern):
     name = "consecutive_bull_boll"
     description = "连续阳线触及布林上轨，短线过热信号"
+    confidence_desc = "接近上轨程度(50%)与连续阳线数(50%)的综合评分"
     default_params = {
         "bb_period":      {"default": 20},
         "bb_stddev":      {"default": 2.0},

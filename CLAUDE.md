@@ -30,6 +30,52 @@ tests/
 
 ---
 
+## 输入 DataFrame 格式
+
+所有 analyzer 和 `snapshot()` 接收的 DataFrame 必须符合以下结构：
+
+```python
+import pandas as pd
+
+df = pd.DataFrame(
+    {
+        "open":   [...],   # float, 开盘价
+        "high":   [...],   # float, 最高价
+        "low":    [...],   # float, 最低价
+        "close":  [...],   # float, 收盘价
+        "volume": [...],   # float, 成交量
+    },
+    index=pd.DatetimeIndex([...]),  # 必须是 datetime 类型
+)
+
+# 可选：标的元信息
+df.attrs["code"] = "159985.SZ"
+df.attrs["name"] = "豆粕ETF华夏"
+```
+
+| 要求 | 说明 |
+|------|------|
+| 列名 | `open`, `high`, `low`, `close`, `volume`（小写） |
+| index | `pd.DatetimeIndex`，时区无关即可 |
+| 数据类型 | OHLCV 均为 `float` / `int`，不可含字符串 |
+| 最少行数 | 需大于所使用指标的预热期（通常 ≥ 60 根 bar） |
+| `df.attrs` | 可选，可包含 `"code"` (str)、`"name"` (str)、`"period"` (str/int)，`snapshot()` 会读取并输出 |
+
+### period 取值
+
+`df.attrs["period"]` 表示 K 线周期，仅用于记录，`snapshot()` 输出时透传。多周期涨跌幅 `chgpct_Nd` 始终按 index 时间差计算（`pd.Timedelta(days=N)` + `ffill`），不受 period 影响。
+
+| 值 | 含义 |
+|----|------|
+| `1`, `5`, `15`, `30`, `60`, `120` | 分钟级 K 线 |
+| `"daily"` | 日线 |
+| `"weekly"` | 周线 |
+| `"monthly"` | 月线 |
+
+`ensure_ohlcv()`（`utils/validation.py`）会在 engine 入口做列检查、类型校验和列名归一化。
+
+---
+
 ## 核心概念
 
 ### OutputMode

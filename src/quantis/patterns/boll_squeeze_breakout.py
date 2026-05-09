@@ -12,6 +12,7 @@ from ..utils.ta import bbands
 class BollSqueezeBreakout(BasePattern):
     name = "boll_squeeze_breakout"
     description = "布林带带宽收窄至极值后价格突破上轨或下轨"
+    confidence_desc = "突破布林轨的幅度占半宽比例，越高突破力度越大"
     default_params = {
         "bb_period":      {"default": 20},
         "bb_stddev":      {"default": 2.0},

@@ -13,6 +13,7 @@ from .macd_bottom_divergence import _find_local_extrema
 class MacdTopDivergence(BasePattern):
     name = "macd_top_divergence"
     description = "价格创新高但DIF未创新高，预示上涨动能衰竭"
+    confidence_desc = "DIF两高点差异占前高点绝对值的比例，越高背离越明显"
     default_params = {
         "fast":     {"default": 12},
         "slow":     {"default": 26},

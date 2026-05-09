@@ -12,6 +12,7 @@ from ..utils.ta import sma
 class MaFallback(BasePattern):
     name = "ma_fallback"
     description = "检测价格突破MA长线后逐步回落向MA短/长线的过程"
+    confidence_desc = "价格回撤幅度占突破幅度的比例，0.7=已回撤70%，越接近1越接近均线"
     default_params = {
         "ma_short":        {"default": 20},
         "ma_long":         {"default": 60},

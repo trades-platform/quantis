@@ -74,6 +74,7 @@ class BasePattern(BaseAnalyzer):
         + pattern-specific extra columns
     """
     kind = "pattern"
+    confidence_desc: str = ""
 
     def last(self, series_df: pd.DataFrame) -> Dict[str, Any]:
         return self.summarize_phase(series_df).to_dict()
