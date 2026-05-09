@@ -92,3 +92,45 @@ def test_ma_fallback_triggers_on_pullback():
     assert phase["bar_count"] >= 1
     assert "peak_price" in phase["extra"]
     assert phase["extra"]["peak_price"] >= 129.0  # near 130
+
+
+def test_macd_zero_golden_cross_triggers():
+    """Verify pattern fires on a genuine zero-axis golden cross."""
+    rs = np.random.RandomState(42)
+    p1 = np.linspace(100, 96, 80)
+    p2 = np.full(60, 96.0) + rs.normal(0, 0.05, 60)
+    p3 = np.linspace(96, 100, 60)
+    close = np.concatenate([p1, p2, p3])
+    df = pd.DataFrame({
+        "open": close, "high": close + 0.5, "low": close - 0.5,
+        "close": close, "volume": np.full(200, 1000.0),
+    })
+    r = analyze(df, ["pattern:macd_zero_golden_cross"], mode=OutputMode.SERIES)
+    sdf = r["macd_zero_golden_cross"]
+    assert sdf["active"].any(), "Should fire on zero-axis golden cross"
+    assert "dif" in sdf.columns
+    assert "dea" in sdf.columns
+    assert "zero_bound" in sdf.columns
+
+
+def test_macd_zero_golden_cross_rejects_far_from_zero():
+    """Verify pattern does NOT fire when golden cross occurs far from zero axis."""
+    rs = np.random.RandomState(42)
+    close = np.linspace(100, 200, 200) + rs.normal(0, 0.2, 200)
+    df = pd.DataFrame({
+        "open": close, "high": close + 1, "low": close - 1,
+        "close": close, "volume": np.full(200, 1000.0),
+    })
+    r = analyze(df, ["pattern:macd_zero_golden_cross"], mode=OutputMode.LAST)
+    assert r["macd_zero_golden_cross"]["active"] is False
+
+
+def test_macd_zero_golden_cross_rejects_death_cross():
+    """Verify pattern does NOT fire on a death cross (DIF down) near zero."""
+    close = np.linspace(100, 95, 200)
+    df = pd.DataFrame({
+        "open": close, "high": close + 0.3, "low": close - 0.3,
+        "close": close, "volume": np.full(200, 1000.0),
+    })
+    r = analyze(df, ["pattern:macd_zero_golden_cross"], mode=OutputMode.LAST)
+    assert r["macd_zero_golden_cross"]["active"] is False
