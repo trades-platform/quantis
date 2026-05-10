@@ -99,16 +99,12 @@ def _build_kwargs(
     tf_period: str,
     adjust: str,
     count: int,
-    start_time: Optional[Union[str, int, pd.Timestamp]],
-    end_time: Optional[Union[str, int, pd.Timestamp]],
+    start_time,  # noqa: unused — kept for signature compat
+    end_time,
 ) -> dict:
-    kwargs: dict = dict(period=tf_period, adjust=adjust, as_dataframe=True)
-    if start_time is not None or end_time is not None:
-        kwargs["start_time"] = _to_ms(start_time) if start_time is not None else None
-        kwargs["end_time"] = _to_ms(end_time) if end_time is not None else None
-    else:
-        kwargs["count"] = count
-    return kwargs
+    # Always use count; tickflow start_time/end_time caps at 100 rows.
+    # We slice locally in _trim instead.
+    return dict(period=tf_period, adjust=adjust, as_dataframe=True, count=count)
 
 
 def _fetch_raw(
@@ -141,6 +137,23 @@ def _resample_120m(df: pd.DataFrame) -> pd.DataFrame:
         volume=("volume", "sum"),
     )
     return result[result["volume"] > 0]
+
+
+def _trim(
+    df: pd.DataFrame,
+    start_time: Optional[Union[str, int, pd.Timestamp]],
+    end_time: Optional[Union[str, int, pd.Timestamp]],
+) -> pd.DataFrame:
+    """Slice normalised df by optional start/end time bounds."""
+    if start_time is None and end_time is None:
+        return df
+    s = pd.Timestamp(start_time) if start_time is not None else None
+    e = pd.Timestamp(end_time) if end_time is not None else None
+    if s is not None:
+        df = df[df.index >= s]
+    if e is not None:
+        df = df[df.index <= e]
+    return df
 
 
 def _normalise(
@@ -246,6 +259,8 @@ def fetch_klines(
         df = _resample_120m(df)
         df.attrs.update(attrs)
 
+    df = _trim(df, start_time, end_time)
+
     if as_dict:
         return {str(period): df}
     return df
@@ -306,6 +321,7 @@ def fetch_klines_multi(
                 attrs = dict(df.attrs)
                 df = _resample_120m(df)
                 df.attrs.update(attrs)
+            df = _trim(df, start_time, end_time)
             results[str(p)] = df
 
     return results

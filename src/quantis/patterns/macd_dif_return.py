@@ -11,8 +11,8 @@ from ..utils.ta import macd
 @register_pattern
 class MacdDifReturnToZero(BasePattern):
     name = "macd_dif_return_to_zero"
-    description = "检测 DIF 从零轴上方或下方回归零轴的持续过程"
-    confidence_desc = "回归幅度占极值比例，0.3=已回归30%，越接近1越接近零轴"
+    description = "DIF回归零轴：从零轴上方回归为上涨中继蓄势（偏多），从零轴下方回归为下跌中继（偏空）"
+    confidence_desc = "回归幅度占极值比例，0.3=已回归30%；direction字段标识above（零轴上方）或below（零轴下方）"
     default_params = {
         "fast":            {"default": 12},
         "slow":            {"default": 26},

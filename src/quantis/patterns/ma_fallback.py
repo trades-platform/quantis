@@ -11,8 +11,8 @@ from ..utils.ta import sma
 @register_pattern
 class MaFallback(BasePattern):
     name = "ma_fallback"
-    description = "检测价格突破MA长线后逐步回落向MA短/长线的过程"
-    confidence_desc = "价格回撤幅度占突破幅度的比例，0.7=已回撤70%，越接近1越接近均线"
+    description = "价格突破均线后回踩，上升趋势中为良性蓄势（偏多），下降趋势中为反弹受阻（偏空）"
+    confidence_desc = "回撤幅度占突破幅度的比例，0.7=已回撤70%；需结合MA交叉判断多空方向"
     default_params = {
         "ma_short":        {"default": 20},
         "ma_long":         {"default": 60},

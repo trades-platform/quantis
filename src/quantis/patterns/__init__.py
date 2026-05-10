@@ -9,4 +9,5 @@ from . import (  # noqa: F401
     volume_breakout_ma,
     macd_zero_golden_cross,
     consecutive_bull_boll,
+    ma_cross,
 )

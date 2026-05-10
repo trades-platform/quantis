@@ -128,6 +128,8 @@ def _classify_from_series(
                 }
                 if cls and getattr(cls, "confidence_desc", ""):
                     entry["confidence_desc"] = cls.confidence_desc
+                if cls and getattr(cls, "description", ""):
+                    entry["description"] = cls.description
                 reserved = {"active", "confidence", "bar_count"}
                 for col in sdf.columns:
                     if col not in reserved:
