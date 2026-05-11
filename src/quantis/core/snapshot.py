@@ -16,7 +16,7 @@ def snapshot(
     df: pd.DataFrame,
     specs: Sequence[SpecLike],
     *,
-    recent_bars: int = 10,
+    recent_bars: int = 21,
 ) -> Dict[str, Any]:
     """Run full analysis and return an LLM-friendly summary dict.
 

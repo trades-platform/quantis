@@ -24,35 +24,24 @@ class TrendAnalysis(BasePrompt):
         "\n   - MA60_ANGLE 反映中长期趋势方向，是判断趋势级别的重要参考"
         "\n   - 观察角度的变化速率：角度持续增大说明趋势在加速，角度收窄说明趋势在减弱"
         "\n4. 多周期涨跌幅反映的趋势力度，中长期涨跌幅（30d/90d/180d）更能反映真实趋势"
-        "\n5. 趋势的强度和持续性判断"
+        "\n5. recent_bars 中的近期走势用于识别趋势反转信号："
+        "\n   - 角度从负转正（或正转负）是趋势反转的早期迹象"
+        "\n   - 价格连续突破均线、成交量放大配合反转"
+        "\n6. 布林带辅助判断趋势强度和阶段："
+        "\n   - 价格沿上轨运行说明上升趋势强劲，沿下轨运行说明下降趋势强劲"
+        "\n   - 布林带三轨（上轨、中轨、下轨）同向向上运行时趋势偏多，同向向下时偏空"
+        "\n   - 布林带收窄（上下轨间距缩小）预示趋势即将选择方向"
+        "\n   - 价格从轨外回归中轨，可能是趋势中继或反转"
+        "\n7. 趋势的强度和持续性判断"
         "\n\n请先用一句话总结当前趋势状态，用逗号分隔不同层面的描述，优先描述中长期趋势方向，再叠加短期状态。如「中长期上升趋势，短期回调蓄势」「中长期下降趋势，短期反弹修复」「中长期震荡，短期偏强」等，然后给出分析依据。"
         "\n\n分析完毕后，请在末尾给出买卖评级："
         "在 [-100, 100] 区间内打分，负数代表看空（-100 为强烈看空），正数代表看多（+100 为强烈看多），0 为中性。"
         "用一行单独输出，格式为「买卖评级：xx」，并附一句话理由。"
+        "\n\n关键操作提示（在评级理由之后单独一行输出）："
+        "如果中长期上升趋势已确认，且短期出现回踩缩量到均线支撑附近，用「操作提示：逢低买入」标记。"
+        "如果中长期下降趋势已确认，且短期出现反弹到均线压力附近，用「操作提示：逢高卖出」标记。"
+        "如果不符合以上条件，不输出操作提示行。"
     )
 
     def build_user_prompt(self, snapshot: Dict[str, Any]) -> str:
-        ma20_angles = []
-        ma60_angles = []
-        for bar in snapshot.get("recent_bars", []):
-            entry = {"date": bar["date"]}
-            if "MA20_ANGLE" in bar:
-                entry["MA20_ANGLE"] = bar["MA20_ANGLE"]
-            if entry.get("MA20_ANGLE") is not None:
-                ma20_angles.append(entry)
-            entry60 = {"date": bar["date"]}
-            if "MA60_ANGLE" in bar:
-                entry60["MA60_ANGLE"] = bar["MA60_ANGLE"]
-            if entry60.get("MA60_ANGLE") is not None:
-                ma60_angles.append(entry60)
-
-        parts = [json.dumps(snapshot, ensure_ascii=False, indent=2, default=str)]
-        if ma20_angles:
-            parts.append("\nMA20_ANGLE 变化:\n" + "\n".join(
-                f"  {a['date']}: {a['MA20_ANGLE']}" for a in ma20_angles
-            ))
-        if ma60_angles:
-            parts.append("\nMA60_ANGLE 变化:\n" + "\n".join(
-                f"  {a['date']}: {a['MA60_ANGLE']}" for a in ma60_angles
-            ))
-        return "\n".join(parts)
+        return json.dumps(snapshot, ensure_ascii=False, indent=2, default=str)
