@@ -1,1 +1,1 @@
-from . import trend, reversal  # noqa: F401
+from . import trend, reversal, short_term  # noqa: F401

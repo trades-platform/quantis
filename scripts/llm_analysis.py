@@ -39,15 +39,32 @@ LLM_PROVIDERS = {
     },
 }
 
-# trend_analysis prompt 相关指标
-DEFAULT_SPECS = [
-    "indicator:ma",
-    "indicator:ma_angle",
-    "indicator:volume",
-    "indicator:boll",
-    "pattern:ma_cross",
-    "pattern:ma_fallback",
-]
+# 各 prompt 专用指标配置
+PROMPT_SPECS = {
+    "trend_analysis": {
+        "specs": [
+            "indicator:ma",
+            "indicator:ma_angle",
+            "indicator:volume",
+            "indicator:boll",
+            "pattern:ma_cross",
+            "pattern:ma_fallback",
+        ],
+        "recent_bars": 21,
+    },
+    "short_term": {
+        "specs": [
+            "indicator:ma",
+            "indicator:ma_angle",
+            "indicator:boll",
+            "indicator:bias",
+            "indicator:rsi",
+            "pattern:ma_cross",
+            "pattern:ma_fallback",
+        ],
+        "recent_bars": 55,
+    },
+}
 
 
 def _extract_result(text: str) -> Dict:
@@ -81,7 +98,8 @@ async def analyze_one(
                             start_time=start_time, end_time=end_time, api_key=api_key)
 
     def _snap(df):
-        return snapshot(df, DEFAULT_SPECS)
+        cfg = PROMPT_SPECS.get(prompt_name, PROMPT_SPECS["trend_analysis"])
+        return snapshot(df, cfg["specs"], recent_bars=cfg.get("recent_bars", 21))
 
     df = await loop.run_in_executor(None, _fetch)
     snap = await loop.run_in_executor(None, _snap, df)
