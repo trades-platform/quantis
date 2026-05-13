@@ -1,9 +1,6 @@
 """Trend analysis prompt — 趋势研判."""
 from __future__ import annotations
 
-import json
-from typing import Any, Dict
-
 from .base import BasePrompt
 from .registry import register_prompt
 
@@ -12,6 +9,20 @@ from .registry import register_prompt
 class TrendAnalysis(BasePrompt):
     name = "trend_analysis"
     description = "趋势研判：分析均线排列、MA交叉状态、多周期涨跌力度，判断当前趋势状态"
+    field_schema = (
+        "数据格式说明："
+        "\n- 标的：代码 名称"
+        "\n- 最新K线：D=日期 O=开 H=高 L=低 C=收 V=量 ATR"
+        "\n- 涨跌幅：chgpct_Nd=N日涨跌百分比"
+        "\n- 指标：当前最新值（JSON）"
+        "\n  MA5/MA10/MA20/MA60=均线, MA20_ANGLE/MA60_ANGLE=均线角度(度),"
+        " BOLL_UPPER/BOLL_MID/BOLL_LOWER=布林带三轨, VOL_MA5/VOL_MA20=成交量均线"
+        "\n- 活跃形态：pattern名（描述） {bar_count, confidence, signal_type, gap_pct等}"
+        "\n  ma_cross=均线交叉, ma_fallback=均线回踩"
+        "\n- 不活跃：当前未触发的形态列表"
+        "\n- 近期走势：TSV格式，每行一根K线，列含 close/volume 及各指标值"
+        "\n- 阶段：历史形态触发区间 conf=置信度变化"
+    )
     system_prompt = (
         "你是一位资深技术分析师，专注于趋势研判。"
         "请根据提供的技术指标数据，分析当前标的的趋势状态。"
@@ -42,6 +53,3 @@ class TrendAnalysis(BasePrompt):
         "如果中长期下降趋势已确认，且短期出现反弹到均线压力附近，用「操作提示：逢高卖出」标记。"
         "如果不符合以上条件，不输出操作提示行。"
     )
-
-    def build_user_prompt(self, snapshot: Dict[str, Any]) -> str:
-        return json.dumps(snapshot, ensure_ascii=False, indent=2, default=str)

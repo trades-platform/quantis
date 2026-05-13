@@ -35,13 +35,15 @@ def snapshot(
         series_result.items,
     )
 
+    show_time = _is_intraday(df)
+
     result = {
-        "last_bar": _build_last_bar(df, indicators),
-        "recent_bars": _extract_recent_bars(df, series_result.items, recent_bars),
+        "last_bar": _build_last_bar(df, indicators, show_time),
+        "recent_bars": _extract_recent_bars(df, series_result.items, recent_bars, show_time),
         "indicators": indicators,
         "active_patterns": active_patterns,
         "inactive_patterns": inactive_patterns,
-        "pattern_phases": _extract_all_pattern_phases(series_result.items),
+        "pattern_phases": _extract_all_pattern_phases(series_result.items, show_time),
     }
     if "code" in df.attrs:
         result["symbol"] = df.attrs["code"]
@@ -63,13 +65,20 @@ def _scalarize(v: Any) -> Any:
     return v
 
 
-def _build_last_bar(df: pd.DataFrame, indicators: dict) -> dict:
+def _is_intraday(df: pd.DataFrame) -> bool:
+    period = df.attrs.get("period")
+    if isinstance(period, (int, float)):
+        return True
+    return False
+
+
+def _build_last_bar(df: pd.DataFrame, indicators: dict, show_time: bool = False) -> dict:
     row = df.iloc[-1]
     close = float(row["close"])
     n = len(df)
 
     bar = {
-        "date": str(df.index[-1].date()) if hasattr(df.index[-1], "date") else str(df.index[-1]),
+        "date": _fmt_index(df.index[-1], show_time),
         "open": round(float(row["open"]), 4),
         "high": round(float(row["high"]), 4),
         "low": round(float(row["low"]), 4),
@@ -156,6 +165,7 @@ def _extract_recent_bars(
     df: pd.DataFrame,
     series_items: Dict[str, Any],
     n: int,
+    show_time: bool = False,
 ) -> List[Dict[str, Any]]:
     tail = df.tail(n)
     indicator_dfs: Dict[str, pd.DataFrame] = {}
@@ -170,7 +180,7 @@ def _extract_recent_bars(
         idx = tail.index[i]
         row = tail.iloc[i]
         bar: Dict[str, Any] = {
-            "date": str(idx.date()) if hasattr(idx, "date") else str(idx),
+            "date": _fmt_index(idx, show_time),
             "close": round(float(row["close"]), 4),
             "volume": int(row["volume"]),
         }
@@ -187,6 +197,7 @@ def _extract_recent_bars(
 
 def _extract_all_pattern_phases(
     series_items: Dict[str, Any],
+    show_time: bool = False,
 ) -> List[Dict[str, Any]]:
     phases: List[Dict[str, Any]] = []
     for key, val in series_items.items():
@@ -194,7 +205,7 @@ def _extract_all_pattern_phases(
             continue
         if "active" not in val.columns:
             continue
-        phases.extend(_extract_pattern_phases(key, val))
+        phases.extend(_extract_pattern_phases(key, val, show_time))
     # Keep only the most recent phases
     phases.sort(key=lambda p: p["end"], reverse=True)
     return phases[:_MAX_PHASES]
@@ -203,6 +214,7 @@ def _extract_all_pattern_phases(
 def _extract_pattern_phases(
     key: str,
     df: pd.DataFrame,
+    show_time: bool = False,
 ) -> List[Dict[str, Any]]:
     active = df["active"].values
     confidence = df["confidence"].values if "confidence" in df.columns else None
@@ -223,8 +235,8 @@ def _extract_pattern_phases(
 
         phase: Dict[str, Any] = {
             "pattern": key,
-            "start": _fmt_index(df.index[start]),
-            "end": _fmt_index(df.index[end]),
+            "start": _fmt_index(df.index[start], show_time),
+            "end": _fmt_index(df.index[end], show_time),
             "length": end - start + 1,
         }
         if confidence is not None:
@@ -240,7 +252,8 @@ def _extract_pattern_phases(
     return phases
 
 
-def _fmt_index(idx) -> str:
+def _fmt_index(idx, show_time: bool = False) -> str:
     if hasattr(idx, "date"):
-        return str(idx.date())
+        fmt = "%Y-%m-%d %H:%M" if show_time else "%Y-%m-%d"
+        return idx.strftime(fmt)
     return str(idx)

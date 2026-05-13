@@ -147,8 +147,9 @@ def _trim(
     """Slice normalised df by optional start/end time bounds."""
     if start_time is None and end_time is None:
         return df
-    s = pd.Timestamp(start_time) if start_time is not None else None
-    e = pd.Timestamp(end_time) if end_time is not None else None
+    tz = df.index.tz
+    s = pd.Timestamp(start_time, tz=tz) if start_time is not None else None
+    e = pd.Timestamp(end_time, tz=tz) if end_time is not None else None
     if s is not None:
         df = df[df.index >= s]
     if e is not None:
@@ -167,11 +168,11 @@ def _normalise(
         raise ValueError(f"No kline data returned for {symbol}")
 
     if "timestamp" in raw.columns:
-        idx = pd.to_datetime(raw["timestamp"], unit="ms")
+        idx = pd.DatetimeIndex(pd.to_datetime(raw["timestamp"], unit="ms", utc=True)).tz_convert("Asia/Shanghai")
     elif "trade_date" in raw.columns:
         idx = pd.to_datetime(raw["trade_date"])
     elif "trade_time" in raw.columns:
-        idx = pd.to_datetime(raw["trade_time"])
+        idx = pd.DatetimeIndex(pd.to_datetime(raw["trade_time"], utc=True)).tz_convert("Asia/Shanghai")
     else:
         idx = raw.index
 

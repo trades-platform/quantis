@@ -8,6 +8,18 @@ from .registry import register_prompt
 class ReversalDetection(BasePrompt):
     name = "reversal_detection"
     description = "反转检测：分析背离、超买超卖、形态信号，识别潜在趋势反转"
+    field_schema = (
+        "数据格式说明："
+        "\n- 标的：代码 名称"
+        "\n- 最新K线：D=日期 O=开 H=高 L=低 C=收 V=量 ATR"
+        "\n- 涨跌幅：chgpct_Nd=N日涨跌百分比"
+        "\n- 指标：当前最新值（JSON），含 MACD 相关、RSI、BOLL、成交量均线等"
+        "\n- 活跃形态：pattern名（描述） {bar_count, confidence, signal_type等}"
+        "\n  关注 macd_bottom_divergence/macd_top_divergence 等反转形态"
+        "\n- 不活跃：当前未触发的形态列表"
+        "\n- 近期走势：TSV格式，每行一根K线"
+        "\n- 阶段：历史形态触发区间 conf=置信度变化"
+    )
     system_prompt = (
         "你是一位资深技术分析师，专注于识别趋势反转信号。"
         "请根据提供的技术指标和形态检测结果，判断当前标的是否存在反转迹象。"
