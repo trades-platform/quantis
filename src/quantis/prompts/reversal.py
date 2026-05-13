@@ -8,6 +8,19 @@ from .registry import register_prompt
 class ReversalDetection(BasePrompt):
     name = "reversal_detection"
     description = "反转检测：分析背离、超买超卖、形态信号，识别潜在趋势反转"
+    specs = [
+        "indicator:ma",
+        "indicator:ma_angle",
+        "indicator:macd",
+        "indicator:boll",
+        "indicator:rsi",
+        "indicator:volume",
+        "pattern:ma_cross",
+        "pattern:ma_fallback",
+        "pattern:macd_bottom_divergence",
+        "pattern:macd_top_divergence",
+    ]
+    recent_bars = 21
     field_schema = (
         "数据格式说明："
         "\n- 标的：代码 名称"

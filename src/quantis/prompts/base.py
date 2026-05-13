@@ -10,6 +10,8 @@ class BasePrompt:
     system_prompt: str = ""
     field_schema: str = ""
     preamble_ack: str = "好的，我将按照上述要求分析以下数据。"
+    specs: list = []
+    recent_bars: int = 21
 
     def build_user_prompt(self, snapshot: Dict[str, Any]) -> str:
         """Build user message from snapshot data — compact text format."""

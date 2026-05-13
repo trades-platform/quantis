@@ -9,6 +9,15 @@ from .registry import register_prompt
 class TrendAnalysis(BasePrompt):
     name = "trend_analysis"
     description = "趋势研判：分析均线排列、MA交叉状态、多周期涨跌力度，判断当前趋势状态"
+    specs = [
+        "indicator:ma",
+        "indicator:ma_angle",
+        "indicator:volume",
+        "indicator:boll",
+        "pattern:ma_cross",
+        "pattern:ma_fallback",
+    ]
+    recent_bars = 21
     field_schema = (
         "数据格式说明："
         "\n- 标的：代码 名称"

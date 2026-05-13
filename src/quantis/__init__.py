@@ -36,6 +36,19 @@ def __getattr__(name):  # type: ignore[no-redef]
         globals()["fetch_klines"] = fetch_klines
         globals()["fetch_klines_multi"] = fetch_klines_multi
         return globals()[name]
+    _AGENT_EXPORTS = {
+        "AnalysisAgent": ".agents",
+        "BatchResult": ".agents",
+        "SingleResult": ".agents",
+        "LLMProvider": ".agents",
+        "get_provider": ".agents",
+    }
+    if name in _AGENT_EXPORTS:
+        import importlib
+        mod = importlib.import_module(_AGENT_EXPORTS[name], __name__)
+        obj = getattr(mod, name)
+        globals()[name] = obj
+        return obj
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 __version__ = "0.1.0"
@@ -66,4 +79,8 @@ __all__ = [
     "register_prompt",
     "fetch_klines",
     "fetch_klines_multi",
+    "AnalysisAgent",
+    "BatchResult",
+    "LLMProvider",
+    "get_provider",
 ]

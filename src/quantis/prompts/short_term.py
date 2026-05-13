@@ -9,6 +9,17 @@ from .registry import register_prompt
 class ShortTermTrade(BasePrompt):
     name = "short_term"
     description = "短周期交易：基于15/30Min级别识别短期趋势方向、回调买点、反弹卖点、趋势转折"
+    specs = [
+        "indicator:ma",
+        "indicator:ma_angle",
+        "indicator:boll",
+        "indicator:bias",
+        "indicator:rsi",
+        "indicator:atr",
+        "pattern:ma_cross",
+        "pattern:ma_fallback",
+    ]
+    recent_bars = 55
     field_schema = (
         "数据格式说明："
         "\n- 标的：代码 名称"
