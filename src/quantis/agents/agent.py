@@ -38,7 +38,7 @@ class AnalysisAgent:
         *,
         llm: str = "deepseek",
         provider: Optional[LLMProvider] = None,
-        session_mode: bool = True,
+        session_mode: bool = False,
         temperature: float = 0.3,
         max_tokens: int = 4096,
     ) -> None:
@@ -132,6 +132,30 @@ class AnalysisAgent:
     ) -> BatchResult:
         return asyncio.run(self.analyze_batch(dfs, **kwargs))
 
+    # ── internal helpers ─────────────────────────────────────────────
+
+    @staticmethod
+    def _extract_usage(resp) -> tuple[int, int]:
+        usage = resp.usage
+        pt = usage.prompt_tokens if usage else 0
+        cht = getattr(usage, 'prompt_cache_hit_tokens', 0) or 0
+        return pt, cht
+
+    def _build_result(
+        self, text: str, code: str, name: str, pt: int, cht: int,
+    ) -> SingleResult:
+        parsed = extract_result(text)
+        return SingleResult(
+            code=code,
+            name=name,
+            trend=parsed["trend"],
+            rating=parsed["rating"],
+            action_hint=parsed["action_hint"],
+            full_text=text,
+            prompt_tokens=pt,
+            cache_hit_tokens=cht,
+        )
+
     # ── session helpers ─────────────────────────────────────────────
 
     def _ensure_session_prefix(self) -> None:
@@ -163,15 +187,8 @@ class AnalysisAgent:
         text = resp.choices[0].message.content or ""
         self._messages.append({"role": "assistant", "content": text})
 
-        parsed = extract_result(text)
-        return SingleResult(
-            code=code,
-            name=name,
-            trend=parsed["trend"],
-            rating=parsed["rating"],
-            action_hint=parsed["action_hint"],
-            full_text=text,
-        )
+        pt, cht = self._extract_usage(resp)
+        return self._build_result(text, code, name, pt, cht)
 
     async def _analyze_stateless(
         self, snap: dict, code: str, name: str
@@ -184,15 +201,9 @@ class AnalysisAgent:
             max_tokens=self._max_tokens,
         )
         text = resp.choices[0].message.content or ""
-        parsed = extract_result(text)
-        return SingleResult(
-            code=code,
-            name=name,
-            trend=parsed["trend"],
-            rating=parsed["rating"],
-            action_hint=parsed["action_hint"],
-            full_text=text,
-        )
+
+        pt, cht = self._extract_usage(resp)
+        return self._build_result(text, code, name, pt, cht)
 
     # ── batch helpers ───────────────────────────────────────────────
 
@@ -239,12 +250,8 @@ class AnalysisAgent:
                     text = resp.choices[0].message.content or ""
                     messages.append({"role": "assistant", "content": text})
 
-                    parsed = extract_result(text)
-                    results.append(SingleResult(
-                        code=code, name=name,
-                        trend=parsed["trend"], rating=parsed["rating"],
-                        action_hint=parsed["action_hint"], full_text=text,
-                    ))
+                    pt, cht = self._extract_usage(resp)
+                    results.append(self._build_result(text, code, name, pt, cht))
                 except Exception as exc:
                     results.append(exc)
             return results

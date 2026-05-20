@@ -15,6 +15,8 @@ class SingleResult:
     action_hint: str = ""
     full_text: str = ""
     snapshot: Optional[dict] = None
+    prompt_tokens: int = 0
+    cache_hit_tokens: int = 0
 
 
 @dataclass
@@ -30,6 +32,14 @@ class BatchResult:
     @property
     def errors(self) -> list:
         return [r for r in self.results if isinstance(r, Exception)]
+
+    @property
+    def total_prompt_tokens(self) -> int:
+        return sum(r.prompt_tokens for r in self.successful)
+
+    @property
+    def total_cache_hit_tokens(self) -> int:
+        return sum(r.cache_hit_tokens for r in self.successful)
 
 
 def extract_result(text: str) -> dict:

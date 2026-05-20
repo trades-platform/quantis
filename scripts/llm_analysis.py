@@ -36,7 +36,9 @@ def main():
     parser.add_argument("--api-key", default=None, help="TickFlow API key")
     parser.add_argument("--no-llm", action="store_true", help="Only print snapshot")
     parser.add_argument("--chunk-size", type=int, default=5, help="Codes per cache session chunk")
-    parser.add_argument("--no-session", action="store_true", help="Disable session caching")
+    parser.add_argument("--session", action="store_true", help="Enable session caching mode")
+    parser.add_argument("--no-session", action="store_true",
+                        help=argparse.SUPPRESS)  # deprecated: now the default
     args = parser.parse_args()
 
     # Collect codes
@@ -55,8 +57,11 @@ def main():
     agent = AnalysisAgent(
         args.prompt,
         llm=args.llm,
-        session_mode=not args.no_session,
+        session_mode=args.session,
     )
+    if args.no_session:
+        print("Warning: --no-session is deprecated, stateless is now the default",
+              file=sys.stderr)
 
     if len(codes) == 1:
         df = fetch_klines(
@@ -108,6 +113,13 @@ def main():
 
     for exc in batch.errors:
         print(f"  ERROR: {exc}", file=sys.stderr)
+
+    # Cache stats
+    pt = batch.total_prompt_tokens
+    cht = batch.total_cache_hit_tokens
+    if pt > 0:
+        hit_rate = cht / pt * 100
+        print(f"\n  Cache: {cht}/{pt} tokens hit ({hit_rate:.1f}%)")
 
 
 if __name__ == "__main__":
